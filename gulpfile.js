@@ -67,18 +67,6 @@ task('svg', () => {
 
 task('static', () => { return src(['src/**/*', '!src/**/*.css', '!src/**/*.js', '!src/**/*.ts', '!src/**/*.html', '!src/**/*.svg']).pipe(dest('build')).pipe(liveroad()) })
 
-task('compressBuild', () => {
-    const brotli = require('gulp-brotli')
-    const gzip = require('gulp-gzip')
-    const merge = require('merge2')
-    const zlib = require('zlib')
-
-    const brotliCompress = src(['build/**/*'])
-    const gzipCompress = src(['build/**/*'])
-
-    return merge([brotliCompress, gzipCompress]).pipe(dest('dist'))
-})
-
 task('watchCss', () => { return watch(['src/**/*.css'], series('css')) })
 task('watchJs', () => { return watch(['src/**/*.js', 'src/**/*.ts'], series('js')) })
 task('watchHtml', () => { return watch(['src/**/*.html'], series('html')) })
@@ -86,13 +74,12 @@ task('watchSvg', () => { return watch(['src/**/*.svg'], series('svg')) })
 task('watchStatic', () => { return watch(['src/**/*', '!src/**/*.css', '!src/**/*.js', '!src/**/*.ts', '!src/**/*.html', '!src/**/*.svg'], series('static')) })
 task('startLivereload', () => { return liveroad.listen({ port: 5000 }) })
 task('startServer', () => {
-    const sirv = require('sirv')('build')
+    const serveStatic = require('serve-static')('build')
     const polka = require('polka')()
     const connectLivereload = require('connect-livereload')({ port: 5000 })
 
-    polka.use(connectLivereload, sirv).listen(8080)
+    polka.use(connectLivereload, serveStatic).listen(8080)
 })
 
 exports.watch = parallel('watchCss', 'watchJs', 'watchHtml', 'watchSvg', 'watchStatic', 'startLivereload', 'startServer')
 exports.default = parallel('css', 'js', 'html', 'svg', 'static')
-exports.distribute = series(parallel('css', 'js', 'html', 'svg', 'static'), 'compressBuild')
